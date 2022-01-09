@@ -1,0 +1,7 @@
+pandas
+numpy
+matplotlib
+QuantLib-Python
+#tensorflow
+tf-agents
+python-dotenv
