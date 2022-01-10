@@ -5,7 +5,9 @@ import pandas as pd
 import tensorflow as tf
 
 from tf_agents.networks import q_network  # Q net
+from tf_agents.networks import actor_distribution_network # Actor net
 from tf_agents.agents.dqn import dqn_agent  # DQN Agent
+from tf_agents.agents.reinforce import reinforce_agent # REINFORCE Agent
 from tf_agents.replay_buffers import tf_uniform_replay_buffer  # replay buffer
 from tf_agents.trajectories import trajectory  # s->s' trajectory
 from tf_agents.utils import common  # loss function
@@ -18,6 +20,7 @@ class DQN:
     """
     Deep Q-Network
     """
+
     def __init__(
         self,
         train_env,
@@ -46,6 +49,17 @@ class DQN:
         logger.info(
             "Initializing the Deep Deterministic Policy Gradient class variables"
         )
+
+    def actor_net(self):
+        fc_layer_params = (100,)
+
+        actor_net = actor_distribution_network.ActorDistributionNetwork(
+            self.train_env.observation_spec(),
+            self.train_env.action_spec(),
+            fc_layer_params=fc_layer_params
+        )
+
+        return actor_net    
 
     def q_net(self):
         fc_layer_params = (100,)
@@ -91,20 +105,29 @@ class DQN:
         avg_return = total_return / num_episodes
         return avg_return.numpy()[0]
 
-    def train(self):
+    def train(self, policy_gradient=False):
 
         optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate=self.learning_rate)
 
         train_step_counter = tf.Variable(0)
 
-        agent = dqn_agent.DqnAgent(
-            self.train_env.time_step_spec(),
-            self.train_env.action_spec(),
-            q_network=self.q_net(),
-            optimizer=optimizer,
-            td_errors_loss_fn=common.element_wise_squared_loss,
-            train_step_counter=train_step_counter,
-        )
+        if policy_gradient:
+            agent = reinforce_agent.ReinforceAgent(
+                self.train_env.time_step_spec(),
+                self.train_env.action_spec(),
+                actor_network=self.actor_net(),
+                optimizer=optimizer,
+                normalize_returns=True,
+                train_step_counter=train_step_counter)
+        else:    
+            agent = dqn_agent.DqnAgent(
+                self.train_env.time_step_spec(),
+                self.train_env.action_spec(),
+                q_network=self.q_net(),
+                optimizer=optimizer,
+                td_errors_loss_fn=common.element_wise_squared_loss,
+                train_step_counter=train_step_counter,
+            )
 
         agent.initialize()
 
@@ -152,12 +175,12 @@ class DQN:
                 print("step = {0}: loss = {1}".format(step, train_loss))
                 loss_history["episode"].append(step)
                 loss_history["loss_ex"].append(float(train_loss))
-            
+
             if step % self.eval_interval == 0:
                 avg_return = self.compute_avg_return(
                     self.eval_env, agent.policy, self.num_eval_episodes
                 )
-                print('step = {0}: Average Return = {1}'.format(step, avg_return))
+                print("step = {0}: Average Return = {1}".format(step, avg_return))
                 return_history["episode"].append(step)
                 return_history["avg_return"].append(avg_return)
 

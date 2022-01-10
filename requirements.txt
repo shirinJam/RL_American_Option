@@ -2,6 +2,6 @@ pandas
 numpy
 matplotlib
 QuantLib-Python
-#tensorflow
+tensorflow
 tf-agents
 python-dotenv
