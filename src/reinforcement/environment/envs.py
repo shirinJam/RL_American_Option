@@ -8,13 +8,15 @@ logger = logging.getLogger("root")
 
 
 class OptionEnvironment(gym.Env):
-    def __init__(self, S0, K, r, sigma, T, N):
+    def __init__(self, S0, K, r, sigma, T, N, sabr_flag=False):
         self.S0 = S0
         self.K = K
         self.r = r
         self.sigma = sigma
+        self.sigma0 = sigma
         self.T = T
         self.N = N
+        self.sabr_flag = sabr_flag
 
         self.S1 = 0
         self.reward = 0
@@ -33,6 +35,7 @@ class OptionEnvironment(gym.Env):
         return [seed]
 
     def step(self, action):
+
         if action == 1:  # exercise
             reward = max(self.K - self.S1, 0.0) * np.exp(
                 -self.r * self.T * (self.day_step / self.N)
@@ -42,15 +45,45 @@ class OptionEnvironment(gym.Env):
             if self.day_step == self.N:  # at maturity
                 reward = max(self.K - self.S1, 0.0) * np.exp(-self.r * self.T)
                 done = True
-            else:  # move to tomorrow
-                reward = 0
-                # lnS1 - lnS0 = (r - 0.5*sigma^2)*t + sigma * Wt
-                self.S1 = self.S1 * np.exp(
-                    (self.r - 0.5 * self.sigma ** 2) * (self.T / self.N)
-                    + self.sigma * np.sqrt(self.T / self.N) * np.random.normal()
-                )
-                self.day_step += 1
-                done = False
+            else:
+                if self.sabr_flag:      # move to tomorrow
+                    # SABR
+                    # SABR parameters
+                    beta = 1
+                    rho = -0.4
+                    volvol = 0.6
+                    ds = 0.001
+
+                    qs = np.random.normal()
+                    qi = np.random.normal()
+                    qv = rho * qs + np.sqrt(1 - rho * rho) * qi
+
+                    gvol = self.sigma * (self.S1 ** (beta - 1))
+                    self.S1 = self.S1 * np.exp(
+                        (self.r - 0.5 * gvol ** 2) * (self.T / self.N)
+                        + gvol * np.sqrt(self.T / self.N) * qs
+                    )
+
+                    self.sigma = self.sigma * np.exp(
+                        (-0.5 * volvol ** 2) * (self.T / self.N)
+                        + volvol * np.sqrt(self.T / self.N) * qv
+                    )
+
+                    self.day_step += 1
+                    reward = 0
+                    done = False
+                    # print(self.sigma)
+
+                else:  # move to tomorrow
+                    print("Using Monte carlo paths")
+                    reward = 0
+                    # lnS1 - lnS0 = (r - 0.5*sigma^2)*t + sigma * Wt
+                    self.S1 = self.S1 * np.exp(
+                        (self.r - 0.5 * self.sigma ** 2) * (self.T / self.N)
+                        + self.sigma * np.sqrt(self.T / self.N) * np.random.normal()
+                    )
+                    self.day_step += 1
+                    done = False
 
         tao = 1.0 - self.day_step / self.N  # time to maturity, in unit of years
         return np.array([self.S1, tao]), reward, done, {}
@@ -58,6 +91,7 @@ class OptionEnvironment(gym.Env):
     def reset(self):
         self.day_step = 0
         self.S1 = self.S0
+        self.sigma = self.sigma0
         tao = 1.0 - self.day_step / self.N  # time to maturity, in unit of years
         return [self.S1, tao]
 

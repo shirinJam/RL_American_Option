@@ -45,6 +45,7 @@ def main(policy_based):
         "d": float(os.getenv("d")),
         "T": float(os.getenv("T")),
         "N": int(os.getenv("N")),
+        "SABR": bool(os.getenv("SABR")),
     }
 
     hyperparameter_settings = {
@@ -57,6 +58,12 @@ def main(policy_based):
         "collect_steps_per_iteration": int(os.getenv("collect_steps_per_iteration")),
         "final_eval_episodes": int(os.getenv("final_eval_episodes")),
     }
+
+    if option_settings.get("SABR"):
+        print("Using SABR Model")
+    else:
+        print("Using Brownian")
+
 
     # setting today'a date
     today_date = date.today()
@@ -79,6 +86,7 @@ def main(policy_based):
         option_settings.get("sigma"),
         option_settings.get("T"),
         option_settings.get("N"),
+        option_settings.get("SABR"),
     )
     eval_env_gym = OptionEnvironment(
         option_settings.get("S0"),
@@ -87,6 +95,7 @@ def main(policy_based):
         option_settings.get("sigma"),
         option_settings.get("T"),
         option_settings.get("N"),
+        option_settings.get("SABR"),
     )
 
     train_env_wrap = gym_wrapper.GymWrapper(train_env_gym)

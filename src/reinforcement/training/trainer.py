@@ -5,9 +5,9 @@ import pandas as pd
 import tensorflow as tf
 
 from tf_agents.networks import q_network  # Q net
-from tf_agents.networks import actor_distribution_network # Actor net
+from tf_agents.networks import actor_distribution_network  # Actor net
 from tf_agents.agents.dqn import dqn_agent  # DQN Agent
-from tf_agents.agents.reinforce import reinforce_agent # REINFORCE Agent
+from tf_agents.agents.reinforce import reinforce_agent  # REINFORCE Agent
 from tf_agents.replay_buffers import tf_uniform_replay_buffer  # replay buffer
 from tf_agents.trajectories import trajectory  # s->s' trajectory
 from tf_agents.utils import common  # loss function
@@ -56,10 +56,10 @@ class DQN:
         actor_net = actor_distribution_network.ActorDistributionNetwork(
             self.train_env.observation_spec(),
             self.train_env.action_spec(),
-            fc_layer_params=fc_layer_params
+            fc_layer_params=fc_layer_params,
         )
 
-        return actor_net    
+        return actor_net
 
     def q_net(self):
         fc_layer_params = (100,)
@@ -111,7 +111,7 @@ class DQN:
 
         train_step_counter = tf.Variable(0)
 
-        if policy_gradient=="yes":
+        if policy_gradient == "yes":
             print("Executing policy gradient")
             agent = reinforce_agent.ReinforceAgent(
                 self.train_env.time_step_spec(),
@@ -119,9 +119,10 @@ class DQN:
                 actor_network=self.actor_net(),
                 optimizer=optimizer,
                 normalize_returns=True,
-                train_step_counter=train_step_counter)
+                train_step_counter=train_step_counter,
+            )
 
-        if policy_gradient=="no":  
+        if policy_gradient == "no":
             print("Executing DQN")
             agent = dqn_agent.DqnAgent(
                 self.train_env.time_step_spec(),
