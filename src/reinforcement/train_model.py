@@ -27,7 +27,7 @@ load_dotenv(hyperparameter_file)
 logger = logging.getLogger("root")
 
 
-def main():
+def main(policy_based):
 
     # initialize logger
     global logger
@@ -106,7 +106,9 @@ def main():
         hyperparameter_settings.get("num_eval_episodes"),
         hyperparameter_settings.get("collect_steps_per_iteration"),
     )
-    trained_policy = dqn.train()
+
+    print("The set policy gradient is: ", policy_based)
+    trained_policy = dqn.train(policy_gradient=policy_based)
 
     npv = dqn.compute_avg_return(
         eval_env,
@@ -134,6 +136,7 @@ def main():
         "algorithm": "DQN",
         "model_date": datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
         "training_time": str(training_time / 60) + " minutes",
+        "policy_based": policy_based,
     }
 
     model_metadata = dict(model_metadata, **option_settings, **hyperparameter_settings)
@@ -155,6 +158,13 @@ if __name__ == "__main__":
         help="Please provide the experiment number",
     )
 
+    parser.add_argument(
+        "--policy_based",
+        type=str,
+        required=True,
+        help="Please provide policy_based as yes or no",
+    )
+
     args = parser.parse_args()
 
     # set experiment number in environment variable
@@ -172,4 +182,4 @@ if __name__ == "__main__":
     if not os.path.exists(f"experiments/{os.getenv('EXPERIMENT_NO')}/tensorboard"):
         os.makedirs(f"experiments/{os.getenv('EXPERIMENT_NO')}/tensorboard")
 
-    main()
+    main(str(args.policy_based))

@@ -3,4 +3,4 @@
 ### Add config changes in config.env and hyperparameters.env
 
 ### Run the application
-`PYTHONPATH=src/ python -m reinforcement.train_model --experiment_no 1`
+`PYTHONPATH=src/ python -m reinforcement.train_model --experiment_no 1 --policy_based False`

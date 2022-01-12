@@ -105,13 +105,14 @@ class DQN:
         avg_return = total_return / num_episodes
         return avg_return.numpy()[0]
 
-    def train(self, policy_gradient=False):
+    def train(self, policy_gradient="no"):
 
         optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate=self.learning_rate)
 
         train_step_counter = tf.Variable(0)
 
-        if policy_gradient:
+        if policy_gradient=="yes":
+            print("Executing policy gradient")
             agent = reinforce_agent.ReinforceAgent(
                 self.train_env.time_step_spec(),
                 self.train_env.action_spec(),
@@ -119,7 +120,9 @@ class DQN:
                 optimizer=optimizer,
                 normalize_returns=True,
                 train_step_counter=train_step_counter)
-        else:    
+
+        if policy_gradient=="no":  
+            print("Executing DQN")
             agent = dqn_agent.DqnAgent(
                 self.train_env.time_step_spec(),
                 self.train_env.action_spec(),
