@@ -4,7 +4,7 @@ from dateutil.relativedelta import relativedelta
 
 
 class Baseline:
-    def __init__(self, today_date, S0, K, r, sigma, d, T):
+    def __init__(self, today_date, S0, K, r, sigma, d, T, option_type="put"):
         """[summary]
 
         Args:
@@ -24,8 +24,12 @@ class Baseline:
         self.sigma = sigma
         self.d = d
         self.T = T
-
-        self.otype = ql.Option.Put
+        
+        if option_type == "put":
+            self.otype = ql.Option.Put
+        if option_type == "call":
+            self.otype = ql.Option.Call
+            
         self.dc = ql.Actual365Fixed()
         self.calendar = ql.NullCalendar()
         self.maturity = ql.Date(

@@ -8,7 +8,7 @@ logger = logging.getLogger("root")
 
 
 class OptionEnvironment(gym.Env):
-    def __init__(self, S0, K, r, sigma, T, N, sabr_flag=False):
+    def __init__(self, S0, K, r, sigma, T, N, sabr_flag=False, option_type="put"):
         self.S0 = S0
         self.K = K
         self.r = r
@@ -17,6 +17,7 @@ class OptionEnvironment(gym.Env):
         self.T = T
         self.N = N
         self.sabr_flag = sabr_flag
+        self.option_type = option_type
 
         self.S1 = 0
         self.reward = 0
@@ -37,13 +38,19 @@ class OptionEnvironment(gym.Env):
     def step(self, action):
 
         if action == 1:  # exercise
-            reward = max(self.K - self.S1, 0.0) * np.exp(
-                -self.r * self.T * (self.day_step / self.N)
-            )
+            if self.option_type == "put":
+                reward = max(self.K - self.S1, 0.0) * np.exp(
+                    -self.r * self.T * (self.day_step / self.N)
+                )
+            if self.option_type == "call":
+                reward = max(self.S1 - self.K, 0.0) * np.exp(-self.r * self.T * (self.day_step/self.N))
             done = True
         else:  # hold
             if self.day_step == self.N:  # at maturity
-                reward = max(self.K - self.S1, 0.0) * np.exp(-self.r * self.T)
+                if self.option_type == "put":
+                    reward = max(self.K - self.S1, 0.0) * np.exp(-self.r * self.T)
+                if self.option_type == "call":
+                    reward = max(self.S1 - self.K, 0.0) * np.exp(-self.r * self.T)
                 done = True
             else:
                 if self.sabr_flag=="True":      # move to tomorrow

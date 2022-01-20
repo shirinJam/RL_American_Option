@@ -47,6 +47,7 @@ def main(policy_based, flow):
         "T": float(os.getenv("T")),
         "N": int(os.getenv("N")),
         "SABR": str(os.getenv("SABR")),
+        "option_type": str(os.getenv("OPTION_TYPE")),
     }
 
     hyperparameter_settings = {
@@ -76,6 +77,7 @@ def main(policy_based, flow):
         option_settings.get("sigma"),
         option_settings.get("d"),
         option_settings.get("T"),
+        option_settings.get("option_type"),
     )
     df = baseline.baseline_model()
 
@@ -87,6 +89,7 @@ def main(policy_based, flow):
         option_settings.get("T"),
         option_settings.get("N"),
         option_settings.get("SABR"),
+        option_settings.get("option_type"),
     )
     eval_env_gym = OptionEnvironment(
         option_settings.get("S0"),
@@ -96,6 +99,7 @@ def main(policy_based, flow):
         option_settings.get("T"),
         option_settings.get("N"),
         option_settings.get("SABR"),
+        option_settings.get("option_type"),
     )
 
     train_env_wrap = gym_wrapper.GymWrapper(train_env_gym)
