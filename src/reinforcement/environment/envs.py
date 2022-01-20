@@ -46,7 +46,7 @@ class OptionEnvironment(gym.Env):
                 reward = max(self.K - self.S1, 0.0) * np.exp(-self.r * self.T)
                 done = True
             else:
-                if self.sabr_flag:      # move to tomorrow
+                if self.sabr_flag=="True":      # move to tomorrow
                     # SABR
                     # SABR parameters
                     beta = 1
@@ -75,7 +75,6 @@ class OptionEnvironment(gym.Env):
                     # print(self.sigma)
 
                 else:  # move to tomorrow
-                    print("Using Monte carlo paths")
                     reward = 0
                     # lnS1 - lnS0 = (r - 0.5*sigma^2)*t + sigma * Wt
                     self.S1 = self.S1 * np.exp(

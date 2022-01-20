@@ -62,7 +62,7 @@ class DQN:
         return actor_net
 
     def q_net(self):
-        fc_layer_params = (100,)
+        fc_layer_params = (75, 50, 75)
 
         q_net = q_network.QNetwork(
             self.train_env.observation_spec(),
@@ -129,6 +129,7 @@ class DQN:
                 self.train_env.action_spec(),
                 q_network=self.q_net(),
                 optimizer=optimizer,
+                epsilon_greedy=0.1,
                 td_errors_loss_fn=common.element_wise_squared_loss,
                 train_step_counter=train_step_counter,
             )

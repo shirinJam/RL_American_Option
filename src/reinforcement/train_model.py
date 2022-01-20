@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from datetime import datetime, date, timedelta
 
 import pandas as pd
+import tensorflow as tf
 
 from tf_agents.environments import gym_wrapper  # wrap OpenAI gym
 from tf_agents.environments import tf_py_environment  # gym to tf gym
@@ -27,7 +28,7 @@ load_dotenv(hyperparameter_file)
 logger = logging.getLogger("root")
 
 
-def main(policy_based):
+def main(policy_based, flow):
 
     # initialize logger
     global logger
@@ -45,7 +46,7 @@ def main(policy_based):
         "d": float(os.getenv("d")),
         "T": float(os.getenv("T")),
         "N": int(os.getenv("N")),
-        "SABR": bool(os.getenv("SABR")),
+        "SABR": str(os.getenv("SABR")),
     }
 
     hyperparameter_settings = {
@@ -59,11 +60,10 @@ def main(policy_based):
         "final_eval_episodes": int(os.getenv("final_eval_episodes")),
     }
 
-    if option_settings.get("SABR"):
+    if option_settings.get("SABR")=="True":
         print("Using SABR Model")
     else:
         print("Using Brownian")
-
 
     # setting today'a date
     today_date = date.today()
@@ -116,43 +116,65 @@ def main(policy_based):
         hyperparameter_settings.get("collect_steps_per_iteration"),
     )
 
-    print("The set policy gradient is: ", policy_based)
-    trained_policy = dqn.train(policy_gradient=policy_based)
+    if flow == "train_evaluate":
+        print("The set policy gradient is: ", policy_based)
+        trained_policy = dqn.train(policy_gradient=policy_based)
 
-    npv = dqn.compute_avg_return(
-        eval_env,
-        trained_policy,
-        num_episodes=hyperparameter_settings.get("collect_steps_per_iteration"),
-    )
-    df["ReinforcementAgent"] = npv
-    df = pd.DataFrame.from_dict(df, orient="index")
-    df.columns = ["Price"]
+        npv = dqn.compute_avg_return(
+            eval_env,
+            trained_policy,
+            num_episodes=hyperparameter_settings.get("final_eval_episodes"),
+        )
+        df["ReinforcementAgent"] = npv
+        df = pd.DataFrame.from_dict(df, orient="index")
+        df.columns = ["Price"]
 
-    name = os.path.join(
-        f"experiments/{os.getenv('EXPERIMENT_NO')}/history", "pricing.csv"
-    )
-    df.to_csv(name, index=True, encoding="utf-8")
+        name = os.path.join(
+            f"experiments/{os.getenv('EXPERIMENT_NO')}/history", "pricing.csv"
+        )
+        df.to_csv(name, index=True, encoding="utf-8")
+
+        training_time = time.time() - start_time
+        # saving configurations for the experiment
+        model_metadata = {
+            "version": _version.__version__,
+            "major_version": _version.MAJOR_VERSION,
+            "minor_version": _version.MINOR_VERSION,
+            "patch_version": _version.PATCH_VERSION,
+            "algorithm": "DQN",
+            "model_date": datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
+            "training_time": str(training_time / 60) + " minutes",
+            "policy_based": policy_based,
+        }
+
+        model_metadata = dict(model_metadata, **option_settings, **hyperparameter_settings)
+        with open(
+            f"experiments/{os.getenv('EXPERIMENT_NO')}/metadata.json", "w", encoding="utf-8"
+        ) as f:
+            json.dump(model_metadata, f, ensure_ascii=False, indent=4)
+
+
+    if flow == "evaluate":
+
+        print("Evaluating the experiment: ",os.getenv('EXPERIMENT_NO'))
+        policy_dir = f"experiments/{os.getenv('EXPERIMENT_NO')}/greedy_policy"
+        saved_policy = tf.compat.v2.saved_model.load(policy_dir)
+        npv = dqn.compute_avg_return(
+            eval_env,
+            saved_policy,
+            num_episodes=hyperparameter_settings.get("final_eval_episodes"),
+        )
+        df["ReinforcementAgent"] = npv
+        df = pd.DataFrame.from_dict(df, orient="index")
+        df.columns = ["Price"]
+
+        name = os.path.join(
+            f"experiments/{os.getenv('EXPERIMENT_NO')}/history", "pricing_evaluation.csv"
+        )
+        df.to_csv(name, index=True, encoding="utf-8")
+
 
     logger.info(f"The experiment was completed")
-
-    training_time = time.time() - start_time
-    # saving configurations for the experiment
-    model_metadata = {
-        "version": _version.__version__,
-        "major_version": _version.MAJOR_VERSION,
-        "minor_version": _version.MINOR_VERSION,
-        "patch_version": _version.PATCH_VERSION,
-        "algorithm": "DQN",
-        "model_date": datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
-        "training_time": str(training_time / 60) + " minutes",
-        "policy_based": policy_based,
-    }
-
-    model_metadata = dict(model_metadata, **option_settings, **hyperparameter_settings)
-    with open(
-        f"experiments/{os.getenv('EXPERIMENT_NO')}/metadata.json", "w", encoding="utf-8"
-    ) as f:
-        json.dump(model_metadata, f, ensure_ascii=False, indent=4)
 
 
 if __name__ == "__main__":
@@ -174,21 +196,30 @@ if __name__ == "__main__":
         help="Please provide policy_based as yes or no",
     )
 
+    parser.add_argument(
+        "--flow",
+        type=str,
+        default="train_evaluate",
+        help="Please provide if training and evaluation need to be done, or just evaluate",
+    )
+
     args = parser.parse_args()
 
     # set experiment number in environment variable
     os.environ["EXPERIMENT_NO"] = args.experiment_no
 
-    if not os.path.exists(f"experiments/{os.getenv('EXPERIMENT_NO')}"):
-        os.makedirs(f"experiments/{os.getenv('EXPERIMENT_NO')}")
+    if args.flow == "train_evaluate":
 
-    if not os.path.exists(f"experiments/{os.getenv('EXPERIMENT_NO')}/history"):
-        os.makedirs(f"experiments/{os.getenv('EXPERIMENT_NO')}/history")
+        if not os.path.exists(f"experiments/{os.getenv('EXPERIMENT_NO')}"):
+            os.makedirs(f"experiments/{os.getenv('EXPERIMENT_NO')}")
 
-    if not os.path.exists(f"experiments/{os.getenv('EXPERIMENT_NO')}/policy"):
-        os.makedirs(f"experiments/{os.getenv('EXPERIMENT_NO')}/policy")
+        if not os.path.exists(f"experiments/{os.getenv('EXPERIMENT_NO')}/history"):
+            os.makedirs(f"experiments/{os.getenv('EXPERIMENT_NO')}/history")
 
-    if not os.path.exists(f"experiments/{os.getenv('EXPERIMENT_NO')}/tensorboard"):
-        os.makedirs(f"experiments/{os.getenv('EXPERIMENT_NO')}/tensorboard")
+        if not os.path.exists(f"experiments/{os.getenv('EXPERIMENT_NO')}/policy"):
+            os.makedirs(f"experiments/{os.getenv('EXPERIMENT_NO')}/policy")
 
-    main(str(args.policy_based))
+        if not os.path.exists(f"experiments/{os.getenv('EXPERIMENT_NO')}/tensorboard"):
+            os.makedirs(f"experiments/{os.getenv('EXPERIMENT_NO')}/tensorboard")
+
+    main(policy_based=args.policy_based, flow=args.flow)
