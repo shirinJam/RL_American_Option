@@ -72,7 +72,9 @@ As the previous section illustrated to navigate through the code and evaluate th
     ```
 
     Here, `<EXPERIMENT_NO>` can be set to any name or number, e.g. new_exp_1. Based on the set entry, the Code will create a new folder under RL_American_Option_Code -> scr -> experiments to place all the related files and trained policy under that experiment folder. It is mandatory to provide `<EXPERIMENT_NO>` to initiate training.
+    
     `<POLICY_FLAG>` can be set to yes or no. If it is set to yes, training using the REINFORCE agent is initiated. If it is set to no, training using the DQN agent is initiated. The default setting is set to no.
+    
     `<OPTION_TYPE>` can be set to put or call as per the requirements. The default setting is set to put.
     **Note:** There is no need to pass --flow parameter, as by default, it is set to training and evaluation.
 
