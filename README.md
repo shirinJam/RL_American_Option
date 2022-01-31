@@ -12,7 +12,9 @@ Please follow the below steps to set up the Reinforcement learning Python code l
 2.	Open Terminal or CMD on the local machine, and navigate to the folder directory of the code, i.e., RL_American_Option_Code. This folder contains the src folder, requirements file and  Readme file. 
 3.	Given the system has python distribution installed along with pip, please execute the below command to install the dependencies to run the code:
 
-    `pip install -r requirements.txt`
+    ```
+    pip install -r requirements.txt
+    ```
 
 ## Evaluating the Trained RL policies
 
@@ -39,12 +41,16 @@ The name corresponds to the folder name where the experiment and its respective 
 1.	Open Terminal or CMD on the local machine, and navigate to the src folder inside the RL_American_Option_Code folder.
 2.	To test and evaluate the trained policy for the DQN agent in the 1st experiment specifically to put option, run the following command:
 
-    ```python3 -m reinforcement.train_model --experiment_no exp_1_dqn_put –-option_type put -–flow evaluate```
+    ```
+    python3 -m reinforcement.train_model --experiment_no exp_1_dqn_put –-option_type put -–flow evaluate
+    ```
 
     These parameters passed in the command line helps the Python code to understand which experiment to use, which option type to use and if it needs to do training or just evaluation. 
 3.	Similarly, to run other experiments follow the same command as below:
 
-    ```python3 -m reinforcement.train_model –-experiment_no <EXPERIMENT_NAME> –-option_type <OPTION_TYPE_BASED_ON_THE_EXPERIMENT> -–flow evaluate```
+    ```
+    python3 -m reinforcement.train_model –-experiment_no <EXPERIMENT_NAME> –-option_type <OPTION_TYPE_BASED_ON_THE_EXPERIMENT> -–flow evaluate
+    ```
 
 	In order to run other experiments with call option, then use option_type as call.
 4.	Since the default evaluation path is set to 2000, the evaluation takes time (15 mins). Once the evaluation is complete, the results are saved in pricing_evaluation.csv along with the benchmark model results. The results can be viewed under the history folder in the respective experiments folder.
@@ -61,9 +67,11 @@ As the previous section illustrated to navigate through the code and evaluate th
     **Note:** Here, `num_iterations` is equal to the number of training episodes
 3.  Once these hyperparameters are set and saved, a new experiment can be initiated through Terminal or CMD using the below command
     
-    ```python3 -m reinforcement.train_model --experiment_no <EXPERIMENT_NO> --policy_based <POLICY_FLAG> --option_type <OPTION_TYPE>```
+    ```
+    python3 -m reinforcement.train_model --experiment_no <EXPERIMENT_NO> --policy_based <POLICY_FLAG> --option_type <OPTION_TYPE>
+    ```
 
-    Here, `<EXPERIMENT_NO>` can be set to any name or number, e.g. new_exp_1. Based on the set entry, the Code will create a new folder under RL_American_Option_Code  scr  experiments to place all the related files and trained policy under that experiment folder. It is mandatory to provide `<EXPERIMENT_NO>` to initiate training.
+    Here, `<EXPERIMENT_NO>` can be set to any name or number, e.g. new_exp_1. Based on the set entry, the Code will create a new folder under RL_American_Option_Code -> scr -> experiments to place all the related files and trained policy under that experiment folder. It is mandatory to provide `<EXPERIMENT_NO>` to initiate training.
     `<POLICY_FLAG>` can be set to yes or no. If it is set to yes, training using the REINFORCE agent is initiated. If it is set to no, training using the DQN agent is initiated. The default setting is set to no.
     `<OPTION_TYPE>` can be set to put or call as per the requirements. The default setting is set to put.
     **Note:** There is no need to pass --flow parameter, as by default, it is set to training and evaluation.
