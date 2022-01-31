@@ -196,14 +196,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "--policy_based",
         type=str,
-        required=True,
+        default="no",
         help="Please provide policy_based as yes or no",
     )
 
     parser.add_argument(
         "--option_type",
         type=str,
-        required=True,
+        default="put",
         help="Please provide option_type as call or put",
     )
 
