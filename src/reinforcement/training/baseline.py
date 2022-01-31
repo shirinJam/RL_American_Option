@@ -4,20 +4,14 @@ from dateutil.relativedelta import relativedelta
 
 
 class Baseline:
+    """This class is reponsible for calculating the option price using baseline models
+       Baseline1: The Binomial Tree
+       Baseline2: The Black-Scholes model
+    """
     def __init__(self, today_date, S0, K, r, sigma, d, T, option_type="put"):
-        """[summary]
 
-        Args:
-            today_date ([type]): [description]
-            S0 ([type]): [description]
-            K ([type]): [description]
-            r ([type]): [description]
-            sigma ([type]): [description]
-            d ([type]): [description]
-            T ([type]): [description]
-        """
-
-        self.today_date = ql.Date(1, 1, 2019)
+        # initialising the required option parameters
+        self.today_date = ql.Date(1, 1, 2021) # Option start-date
         self.S0 = S0
         self.K = K
         self.r = r
@@ -32,11 +26,14 @@ class Baseline:
             
         self.dc = ql.Actual365Fixed()
         self.calendar = ql.NullCalendar()
-        self.maturity = ql.Date(
-            31, 12, 2019
-        )  # self.today_date + relativedelta(years=1)
+        self.maturity = ql.Date(31, 12, 2021) # Option end-date
 
     def baseline_model(self):
+        """Calculates the American option price by using Benchmark models
+
+        Returns:
+            dict: returns a dictionary with the baseline model name and the corresponding values
+        """
 
         ql.Settings.instance().evaluationDate = self.today_date
         payoff = ql.PlainVanillaPayoff(self.otype, self.K)
@@ -65,10 +62,6 @@ class Baseline:
         bsm73 = ql.AnalyticEuropeanEngine(bsm_process)
         european_option.setPricingEngine(bsm73)
         pricing_dict["BlackScholesEuropean"] = european_option.NPV()
-
-        analytical_engine = ql.BaroneAdesiWhaleyApproximationEngine(bsm_process)
-        american_option.setPricingEngine(analytical_engine)
-        pricing_dict["BawApproximation"] = american_option.NPV()
 
         binomial_engine = ql.BinomialVanillaEngine(bsm_process, "crr", 100)
         american_option.setPricingEngine(binomial_engine)

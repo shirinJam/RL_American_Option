@@ -50,6 +50,7 @@ class DQN:
             "Initializing the Deep Deterministic Policy Gradient class variables"
         )
 
+    # Actor-Network for policy-gradient
     def actor_net(self):
         fc_layer_params = (100,)
 
@@ -61,6 +62,8 @@ class DQN:
 
         return actor_net
 
+
+    # Q-Network for value-based DQN
     def q_net(self):
         fc_layer_params = (75, 50, 75)
 
@@ -72,6 +75,7 @@ class DQN:
 
         return q_net
 
+
     # Data Collection
     def collect_step(self, environment, policy, buffer):
         time_step = environment.current_time_step()
@@ -82,12 +86,18 @@ class DQN:
         # Add trajectory to the replay buffer
         buffer.add_batch(traj)
 
-    def collect_data(self, env, policy, buffer, steps):
-        for _ in range(steps):
-            self.collect_step(env, policy, buffer)
 
-    # eval_env evaluation
     def compute_avg_return(self, environment, policy, num_episodes=10):
+        """Calculates the cumulative average return obtained by following a certain policy over the given number of paths
+
+        Args:
+            environment (object): the instantiated environmnet object
+            policy (object): the policy being followed by the agent
+            num_episodes (int, optional): Number of Monte Carlo paths. Defaults to 10.
+
+        Returns:
+            int: Average return
+        """
 
         total_return = 0.0
 
@@ -105,7 +115,16 @@ class DQN:
         avg_return = total_return / num_episodes
         return avg_return.numpy()[0]
 
+
     def train(self, policy_gradient="no"):
+        """Training
+
+        Args:
+            policy_gradient (str, optional): Whether the agent is policy-based or DQN. Defaults to "no".
+
+        Returns:
+            object: trained policy
+        """
 
         optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate=self.learning_rate)
 
@@ -149,28 +168,29 @@ class DQN:
 
         iterator = iter(dataset)
 
-        # step 5 - training - takes a while
-        # (Optional) Optimize by wrapping some of the code in a graph using TF function.
+        # Training
+        # Optimize by wrapping the code in a graph using TF function
         agent.train = common.function(agent.train)
 
         # Reset the train step
         agent.train_step_counter.assign(0)
 
-        # Evaluate the agent's policy once before training.
+        # Evaluate the agent's policy once before training
         avg_return = self.compute_avg_return(
             self.eval_env, agent.policy, self.num_eval_episodes
         )
+
         # some statistics
         loss_history = {"episode": [], "loss_ex": []}
         return_history = {"episode": [0], "avg_return": [avg_return]}
 
         for _ in range(self.num_iterations):
 
-            # Collect a few steps using collect_policy and save to the replay buffer.
+            # Collect a few steps using collect_policy and save to the replay buffer
             for _ in range(self.collect_steps_per_iteration):
                 self.collect_step(self.train_env, agent.collect_policy, replay_buffer)
 
-            # Sample a batch of data from the buffer and update the agent's network.
+            # Sample a batch of data from the buffer and update the agent's network
             experience, unused_info = next(iterator)
             train_loss = agent.train(experience).loss
 

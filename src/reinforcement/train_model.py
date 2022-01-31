@@ -68,6 +68,7 @@ def main(policy_based, flow):
 
     # setting today'a date
     today_date = date.today()
+    
     # calling baseline model evaluations
     baseline = Baseline(
         today_date,
