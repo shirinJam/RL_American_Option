@@ -28,7 +28,7 @@ load_dotenv(hyperparameter_file)
 logger = logging.getLogger("root")
 
 
-def main(policy_based, flow):
+def main(policy_based, option_type, flow):
 
     # initialize logger
     global logger
@@ -47,7 +47,7 @@ def main(policy_based, flow):
         "T": float(os.getenv("T")),
         "N": int(os.getenv("N")),
         "SABR": str(os.getenv("SABR")),
-        "option_type": str(os.getenv("OPTION_TYPE")),
+        "option_type": option_type,
     }
 
     hyperparameter_settings = {
@@ -68,7 +68,6 @@ def main(policy_based, flow):
 
     # setting today'a date
     today_date = date.today()
-    
     # calling baseline model evaluations
     baseline = Baseline(
         today_date,
@@ -202,6 +201,13 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "--option_type",
+        type=str,
+        required=True,
+        help="Please provide option_type as call or put",
+    )
+
+    parser.add_argument(
         "--flow",
         type=str,
         default="train_evaluate",
@@ -221,10 +227,4 @@ if __name__ == "__main__":
         if not os.path.exists(f"experiments/{os.getenv('EXPERIMENT_NO')}/history"):
             os.makedirs(f"experiments/{os.getenv('EXPERIMENT_NO')}/history")
 
-        if not os.path.exists(f"experiments/{os.getenv('EXPERIMENT_NO')}/policy"):
-            os.makedirs(f"experiments/{os.getenv('EXPERIMENT_NO')}/policy")
-
-        if not os.path.exists(f"experiments/{os.getenv('EXPERIMENT_NO')}/tensorboard"):
-            os.makedirs(f"experiments/{os.getenv('EXPERIMENT_NO')}/tensorboard")
-
-    main(policy_based=args.policy_based, flow=args.flow)
+    main(policy_based=args.policy_based, option_type= args.option_type, flow=args.flow)

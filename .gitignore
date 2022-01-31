@@ -139,7 +139,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-experiments/
 
 .vscode/
 src/.vscode/launch.json
